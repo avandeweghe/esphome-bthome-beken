@@ -22,6 +22,8 @@ class BTHomeBeken : public Component {
   void set_local_name(const std::string &name) { this->local_name_ = name; }
   void set_adv_interval_ms(uint32_t ms) { this->adv_interval_ms_ = ms; }
   void set_moisture(binary_sensor::BinarySensor *s) { this->moisture_ = s; }
+  void set_tamper(binary_sensor::BinarySensor *s) { this->tamper_ = s; }
+  void set_vibration(binary_sensor::BinarySensor *s) { this->vibration_ = s; }
   void set_battery(sensor::Sensor *s) { this->battery_ = s; }
   void set_auto_start(bool v) { this->auto_start_ = v; }
   void set_refresh_interval_ms(uint32_t ms) { this->refresh_ms_ = ms; }
@@ -41,6 +43,8 @@ class BTHomeBeken : public Component {
   std::string local_name_{"BTHome"};
   uint32_t adv_interval_ms_{100};
   binary_sensor::BinarySensor *moisture_{nullptr};
+  binary_sensor::BinarySensor *tamper_{nullptr};
+  binary_sensor::BinarySensor *vibration_{nullptr};
   sensor::Sensor *battery_{nullptr};
   std::vector<std::function<void()>> on_broadcast_;
   std::vector<std::function<void()>> on_packet_;
@@ -55,6 +59,8 @@ class BTHomeBeken : public Component {
   uint8_t pending_button_{0};
   uint8_t sent_button_{0};
   int sent_moisture_{-1};
+  int sent_tamper_{-1};
+  int sent_vibration_{-1};
   int sent_battery_{-1};
   uint8_t packet_id_{0};
   ESPPreferenceObject pref_;

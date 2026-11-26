@@ -25,6 +25,8 @@ bthome_beken:
   id: ble
   local_name: "Sump"          # up to 8 characters
   moisture: water_leak        # binary_sensor id (optional)
+  tamper: case_open           # binary_sensor id (optional)
+  vibration: shaking          # binary_sensor id (optional)
   battery: battery_level      # sensor id, % (optional)
   adv_interval: 50ms
   auto_start: true            # false: start later with bthome_beken.start
@@ -41,7 +43,7 @@ Actions:
 - `bthome_beken.button_event: {id: ble, type: press}` sends a button event
   (`press`, `double_press`, `long_press`).
 
-Broadcast objects: packet id, battery, moisture, button, and a "count" holding
+Broadcast objects: packet id, battery, moisture, tamper, vibration, button, and a "count" holding
 the milliseconds from boot to the first broadcast.
 
 See [examples/tuya-water-sensor.yaml](examples/tuya-water-sensor.yaml) for a

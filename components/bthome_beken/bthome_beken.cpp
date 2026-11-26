@@ -72,12 +72,19 @@ void BTHomeBeken::build_packet_() {
   if (this->sent_moisture_ >= 0) {
     a[i++] = 0x20; a[i++] = (uint8_t) this->sent_moisture_;  // moisture
   }
+  if (this->sent_tamper_ >= 0) {
+    a[i++] = 0x2B; a[i++] = (uint8_t) this->sent_tamper_;  // tamper
+  }
+  if (this->sent_vibration_ >= 0) {
+    a[i++] = 0x2C; a[i++] = (uint8_t) this->sent_vibration_;  // vibration
+  }
+  // Objects go in ascending id order (BTHome v2): button 0x3A before count 0x3D.
+  if (this->sent_button_) {
+    a[i++] = 0x3A; a[i++] = this->sent_button_;  // button event
+  }
   if (this->broadcast_ms_ > 0) {
     uint16_t ms = this->broadcast_ms_ > 0xFFFF ? 0xFFFF : this->broadcast_ms_;
     a[i++] = 0x3D; a[i++] = ms & 0xFF; a[i++] = ms >> 8;  // count (uint16): wake-to-broadcast ms
-  }
-  if (this->sent_button_) {
-    a[i++] = 0x3A; a[i++] = this->sent_button_;  // button event
   }
   a[len_pos] = i - len_pos - 1;
   uint8_t n = this->local_name_.size();
@@ -142,6 +149,12 @@ void BTHomeBeken::loop() {
   int moisture = -1;
   if (this->moisture_ != nullptr && this->moisture_->has_state())
     moisture = this->moisture_->state ? 1 : 0;
+  int tamper = -1;
+  if (this->tamper_ != nullptr && this->tamper_->has_state())
+    tamper = this->tamper_->state ? 1 : 0;
+  int vibration = -1;
+  if (this->vibration_ != nullptr && this->vibration_->has_state())
+    vibration = this->vibration_->state ? 1 : 0;
   int battery = -1;
   if (this->battery_ != nullptr && this->battery_->has_state() && !std::isnan(this->battery_->state))
     battery = (int) lroundf(clamp(this->battery_->state, 0.0f, 100.0f));
@@ -180,6 +193,8 @@ void BTHomeBeken::loop() {
       break;
     case SET_DATA:
       this->sent_moisture_ = moisture;
+      this->sent_tamper_ = tamper;
+      this->sent_vibration_ = vibration;
       this->sent_battery_ = battery;
       this->build_packet_();
       this->step_ms_ = now;
@@ -215,8 +230,9 @@ void BTHomeBeken::loop() {
         bk_ble_set_adv_data(g_actv, this->adv_, this->adv_len_, cmd_cb);
         this->pref_.save(&this->packet_id_);
         g_state = RUNNING;
-        ESP_LOGI(TAG, "Broadcasting as '%s' %u ms after boot (moisture %d, battery %d)", this->local_name_.c_str(),
-                 (unsigned) now, this->sent_moisture_, this->sent_battery_);
+        ESP_LOGI(TAG, "Broadcasting as '%s' %u ms after boot (moisture %d, tamper %d, vibration %d, battery %d)",
+                 this->local_name_.c_str(), (unsigned) now, this->sent_moisture_, this->sent_tamper_,
+                 this->sent_vibration_, this->sent_battery_);
         for (auto &cb : this->on_packet_) cb();
         for (auto &cb : this->on_broadcast_) cb();
       }
@@ -229,17 +245,21 @@ void BTHomeBeken::loop() {
       // quick successive changes don't overwrite a packet before it's heard.
       if (now - this->last_send_ms_ < 600)
         break;
-      if (refresh || moisture != this->sent_moisture_ || battery != this->sent_battery_ || button != this->sent_button_) {
+      if (refresh || moisture != this->sent_moisture_ || tamper != this->sent_tamper_ ||
+          vibration != this->sent_vibration_ || battery != this->sent_battery_ || button != this->sent_button_) {
         this->last_send_ms_ = now;
         this->pending_button_ = 0;
         this->sent_moisture_ = moisture;
+        this->sent_tamper_ = tamper;
+        this->sent_vibration_ = vibration;
         this->sent_battery_ = battery;
         this->sent_button_ = button;
         this->packet_id_++;
         this->build_packet_();
         bk_ble_set_adv_data(g_actv, this->adv_, this->adv_len_, cmd_cb);
         this->pref_.save(&this->packet_id_);
-        ESP_LOGD(TAG, "Packet %u: moisture %d, battery %d, button %u", this->packet_id_, moisture, battery, button);
+        ESP_LOGD(TAG, "Packet %u: moisture %d, tamper %d, vibration %d, battery %d, button %u", this->packet_id_,
+                 moisture, tamper, vibration, battery, button);
         for (auto &cb : this->on_packet_) cb();
       }
       break;

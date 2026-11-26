@@ -8,8 +8,8 @@ Requires, in the device YAML:
         custom_options.sys_config#h:
           - "CFG_SUPPORT_BLE = 1"
 
-Broadcasts: packet id, battery %, moisture, wake-to-broadcast time (as a
-"count" in ms) and button events. Fires on_broadcast once advertising starts,
+Broadcasts: packet id, battery %, moisture, tamper, vibration,
+wake-to-broadcast time (as a "count" in ms) and button events. Fires on_broadcast once advertising starts,
 and on_packet every time new data goes out.
 """
 
@@ -23,6 +23,8 @@ DEPENDENCIES = ["bk72xx"]
 
 CONF_LOCAL_NAME = "local_name"
 CONF_MOISTURE = "moisture"
+CONF_TAMPER = "tamper"
+CONF_VIBRATION = "vibration"
 CONF_BATTERY = "battery"
 CONF_ADV_INTERVAL = "adv_interval"
 CONF_ON_BROADCAST = "on_broadcast"
@@ -48,6 +50,8 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Optional(CONF_REFRESH_INTERVAL, default="0s"): cv.positive_time_period_milliseconds,
         cv.Optional(CONF_LOCAL_NAME, default="BTHome"): cv.All(cv.string, cv.Length(max=8)),
         cv.Optional(CONF_MOISTURE): cv.use_id(binary_sensor.BinarySensor),
+        cv.Optional(CONF_TAMPER): cv.use_id(binary_sensor.BinarySensor),
+        cv.Optional(CONF_VIBRATION): cv.use_id(binary_sensor.BinarySensor),
         cv.Optional(CONF_BATTERY): cv.use_id(sensor.Sensor),
         cv.Optional(CONF_ADV_INTERVAL, default="100ms"): cv.All(
             cv.positive_time_period_milliseconds,
@@ -72,6 +76,10 @@ async def to_code(config):
     cg.add(var.set_adv_interval_ms(config[CONF_ADV_INTERVAL].total_milliseconds))
     if CONF_MOISTURE in config:
         cg.add(var.set_moisture(await cg.get_variable(config[CONF_MOISTURE])))
+    if CONF_TAMPER in config:
+        cg.add(var.set_tamper(await cg.get_variable(config[CONF_TAMPER])))
+    if CONF_VIBRATION in config:
+        cg.add(var.set_vibration(await cg.get_variable(config[CONF_VIBRATION])))
     if CONF_BATTERY in config:
         cg.add(var.set_battery(await cg.get_variable(config[CONF_BATTERY])))
     for conf in config.get(CONF_ON_BROADCAST, []):

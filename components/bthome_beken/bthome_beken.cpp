@@ -38,6 +38,7 @@ static const uint32_t BLE_MSG_POLL = 0;
 static volatile bool g_stack_ok = false;
 static volatile int g_cmd_done = -1;
 static volatile int g_cmd_status = -1;
+static volatile int g_cmd_status1 = -1;  // byte 1 (status if the SDK uses packed enums)
 
 static void notice_cb(int notice, void *param) {
   if (notice == BLE_5_STACK_OK)
@@ -48,6 +49,7 @@ static void cmd_cb(int cmd, void *param) {
   // ble_cmd_param_t { uint8_t cmd_idx; ble_err_t status; } - 4-byte enum, status at byte 4
   const uint8_t *p = static_cast<const uint8_t *>(param);
   g_cmd_status = p ? p[4] : -2;
+  g_cmd_status1 = p ? p[1] : -2;
   g_cmd_done = cmd;
 }
 
@@ -192,7 +194,7 @@ void BTHomeBeken::loop() {
     // create = 1), so don't match on them; just log what came back.
     case WAIT_CREATE:
       if (g_cmd_done >= 0) {
-        ESP_LOGD(TAG, "create advertising done (cmd %d, status %d)", g_cmd_done, g_cmd_status);
+        ESP_LOGD(TAG, "create advertising done (cmd %d, status byte4 %d byte1 %d)", g_cmd_done, g_cmd_status, g_cmd_status1);
         g_state = SET_DATA;
       }
       break;
@@ -213,7 +215,7 @@ void BTHomeBeken::loop() {
       break;
     case WAIT_DATA:
       if (g_cmd_done >= 0) {
-        ESP_LOGD(TAG, "set advertising data done (cmd %d, status %d)", g_cmd_done, g_cmd_status);
+        ESP_LOGD(TAG, "set advertising data done (cmd %d, status byte4 %d byte1 %d)", g_cmd_done, g_cmd_status, g_cmd_status1);
         g_state = START;
       }
       break;
@@ -229,7 +231,7 @@ void BTHomeBeken::loop() {
       break;
     case WAIT_START:
       if (g_cmd_done >= 0) {
-        ESP_LOGD(TAG, "start advertising done (cmd %d, status %d)", g_cmd_done, g_cmd_status);
+        ESP_LOGD(TAG, "start advertising done (cmd %d, status byte4 %d byte1 %d)", g_cmd_done, g_cmd_status, g_cmd_status1);
         this->broadcast_ms_ = now;
         this->last_send_ms_ = now;
         // Re-send right away so the packet carries the wake-to-broadcast time.

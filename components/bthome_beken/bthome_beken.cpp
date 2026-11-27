@@ -187,9 +187,14 @@ void BTHomeBeken::loop() {
       }
       break;
     }
+    // Commands are issued one at a time, so any callback completes the pending
+    // one. The command codes differ between SDKs (BK7231N: create = 0; BK7238:
+    // create = 1), so don't match on them; just log what came back.
     case WAIT_CREATE:
-      if (g_cmd_done == BLE_CREATE_ADV)
+      if (g_cmd_done >= 0) {
+        ESP_LOGD(TAG, "create advertising done (cmd %d, status %d)", g_cmd_done, g_cmd_status);
         g_state = SET_DATA;
+      }
       break;
     case SET_DATA:
       this->sent_moisture_ = moisture;
@@ -207,8 +212,10 @@ void BTHomeBeken::loop() {
       }
       break;
     case WAIT_DATA:
-      if (g_cmd_done == BLE_SET_ADV_DATA)
+      if (g_cmd_done >= 0) {
+        ESP_LOGD(TAG, "set advertising data done (cmd %d, status %d)", g_cmd_done, g_cmd_status);
         g_state = START;
+      }
       break;
     case START:
       this->step_ms_ = now;
@@ -221,7 +228,8 @@ void BTHomeBeken::loop() {
       }
       break;
     case WAIT_START:
-      if (g_cmd_done == BLE_START_ADV) {
+      if (g_cmd_done >= 0) {
+        ESP_LOGD(TAG, "start advertising done (cmd %d, status %d)", g_cmd_done, g_cmd_status);
         this->broadcast_ms_ = now;
         this->last_send_ms_ = now;
         // Re-send right away so the packet carries the wake-to-broadcast time.

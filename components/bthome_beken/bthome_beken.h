@@ -20,6 +20,7 @@ class BTHomeBeken : public Component {
   float get_setup_priority() const override { return setup_priority::LATE; }
 
   void set_local_name(const std::string &name) { this->local_name_ = name; }
+  void set_adv_flags(bool v) { this->adv_flags_ = v; }
   void set_adv_interval_ms(uint32_t ms) { this->adv_interval_ms_ = ms; }
   void set_moisture(binary_sensor::BinarySensor *s) { this->moisture_ = s; }
   void set_tamper(binary_sensor::BinarySensor *s) { this->tamper_ = s; }
@@ -41,6 +42,7 @@ class BTHomeBeken : public Component {
   void build_packet_();
 
   std::string local_name_{"BTHome"};
+  bool adv_flags_{true};
   uint32_t adv_interval_ms_{100};
   binary_sensor::BinarySensor *moisture_{nullptr};
   binary_sensor::BinarySensor *tamper_{nullptr};

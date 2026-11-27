@@ -62,7 +62,9 @@ bool BTHomeBeken::is_broadcasting() const { return g_state == RUNNING; }
 void BTHomeBeken::build_packet_() {
   uint8_t *a = this->adv_;
   uint8_t i = 0;
-  a[i++] = 0x02; a[i++] = 0x01; a[i++] = 0x06;  // flags: LE general discoverable, no BR/EDR
+  if (this->adv_flags_) {
+    a[i++] = 0x02; a[i++] = 0x01; a[i++] = 0x06;  // flags: LE general discoverable, no BR/EDR
+  }
   uint8_t len_pos = i++;
   a[i++] = 0x16;                                 // service data, 16-bit UUID
   a[i++] = 0xD2; a[i++] = 0xFC;                  // 0xFCD2 = BTHome

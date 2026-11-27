@@ -22,6 +22,7 @@ from esphome.const import CONF_ID, CONF_TRIGGER_ID, CONF_TYPE
 DEPENDENCIES = ["bk72xx"]
 
 CONF_LOCAL_NAME = "local_name"
+CONF_ADV_FLAGS = "adv_flags"
 CONF_MOISTURE = "moisture"
 CONF_TAMPER = "tamper"
 CONF_VIBRATION = "vibration"
@@ -49,6 +50,10 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Optional(CONF_AUTO_START, default=True): cv.boolean,
         cv.Optional(CONF_REFRESH_INTERVAL, default="0s"): cv.positive_time_period_milliseconds,
         cv.Optional(CONF_LOCAL_NAME, default="BTHome"): cv.All(cv.string, cv.Length(max=8)),
+        # Put the AD flags field in the advertising data. The BK7231N stack needs
+        # it; the BK7238 (ble_5_2) stack adds flags itself and rejects data that
+        # already has them (set adv data fails, nothing goes on air).
+        cv.Optional(CONF_ADV_FLAGS, default=True): cv.boolean,
         cv.Optional(CONF_MOISTURE): cv.use_id(binary_sensor.BinarySensor),
         cv.Optional(CONF_TAMPER): cv.use_id(binary_sensor.BinarySensor),
         cv.Optional(CONF_VIBRATION): cv.use_id(binary_sensor.BinarySensor),
@@ -71,6 +76,7 @@ async def to_code(config):
     var = cg.new_Pvariable(config[CONF_ID])
     await cg.register_component(var, config)
     cg.add(var.set_local_name(config[CONF_LOCAL_NAME]))
+    cg.add(var.set_adv_flags(config[CONF_ADV_FLAGS]))
     cg.add(var.set_auto_start(config[CONF_AUTO_START]))
     cg.add(var.set_refresh_interval_ms(config[CONF_REFRESH_INTERVAL].total_milliseconds))
     cg.add(var.set_adv_interval_ms(config[CONF_ADV_INTERVAL].total_milliseconds))
